@@ -1,3 +1,9 @@
 [submodule "server/lib/vendor/Socket.IO-node"]
 	path = server/lib/vendor/Socket.IO-node
 	url = http://github.com/LearnBoost/Socket.IO-node.git
+[submodule "client/vendor/Socket.IO"]
+	path = client/vendor/Socket.IO
+	url = http://github.com/LearnBoost/Socket.IO.git
+[submodule "server/lib/vendor/node-paperboy"]
+	path = server/lib/vendor/node-paperboy
+	url = http://github.com/felixge/node-paperboy.git

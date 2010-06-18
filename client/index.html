@@ -1,0 +1,143 @@
+<!doctype html>
+<html>
+	<head>
+		<title>socket.io client test</title>
+    	<link type="text/css" href="/css/smoothness/jquery-ui-1.8.1.custom.css" rel="stylesheet" />
+		<script src="/vendor/Socket.IO/socket.io.js"></script>
+		<script src="/js/jquery-1.4.2.js"></script>
+		<script src="/js/jquery-ui-1.8.1.custom.min.js"></script>
+		<script type='text/javascript'>
+			$(document).ready(function() {
+				$('#bancada').css({'display':'none'});
+			
+				$('#connectBtn').click(function() {
+					connect();
+				});
+				$('#imgBtn').click(function() {
+					initCreate();
+				});
+				
+				io.setPath('/vendor/Socket.IO/');
+				
+				var preventDisconnectInterval = setInterval(preventDisconnect, 30000);
+			});
+			
+			function preventDisconnect() {
+				if (socket.connected) {
+					var JSONfoo = JSON.stringify({type:"preventDisconnect"});
+					socket.send(JSONfoo);
+				}
+			}
+		
+			function connect() {
+				console.log("connect clicked");
+				socket = new io.Socket('127.0.0.1', {rememberTransport: false, port: 8080});
+				addSocketListeners();
+				socket.connect();
+			}
+			
+			function initCreate() {
+				var foo = {};
+				foo.type = "create"
+				foo.data = 'http://3.bp.blogspot.com/__RBqrE6fUj8/SiNcf4suTzI/AAAAAAAAAVk/ar9PFgIc7yQ/s400/capivara.jpg';
+				
+				var JSONfoo = JSON.stringify(foo);
+				
+				socket.send(JSONfoo);
+			}
+			
+			function initMove(element) {
+				var foo = {};
+				foo.type = "move"
+				foo.data = {'id':element.id, 'x':element.x, 'y':element.y};
+				
+				var JSONfoo = JSON.stringify(foo);
+				
+				socket.send(JSONfoo);
+			}
+
+			function addSocketListeners() {
+				socket.addEvent('connect', function() {
+					console.log("client connected");
+					$('#connect').css({'display':'none'});
+					$('#bancada').css({'display':'block'});
+				});
+				socket.addEvent('message', function(data) {
+					var obj = JSON.parse(data);
+					
+					console.log("type " + obj.type + " -> " + obj.data);
+					
+					switch(obj.type) {
+						case "connect":
+						case "disconnect":
+							$('#bancada h1').text('Connected Peeps: ' + obj.data);
+							break;
+						case 'initBancada':
+							initBancada(obj.data);
+							break;
+						case "create":
+							create(obj.data);
+							break;
+						case 'move':
+							move(obj.data);
+					}
+				});
+				socket.addEvent('disconnect', function() {
+					console.log("client disconnected");
+				});
+			}
+			
+			function initBancada(obj) {
+				for (var i = 0; l = obj.length, i < l; i++) {
+					console.log("create -> " + obj[i]);
+					create(obj[i]);
+				}
+			}
+			
+			function create(obj) {
+				var img = new Image();
+				img.id = obj.id
+				img.src = obj.url;
+				
+				$('#bancada').append(img);
+				
+				$(img).resizable().parent('.ui-wrapper').draggable({
+					start: function() {
+						//
+					},
+					drag: function() {
+						//
+					},
+					stop: function() {
+						initMove(this.firstChild);
+					}
+				});
+				
+				$(img).parent('.ui-wrapper').left = obj.x;
+				$(img).parent('.ui-wrapper').top = obj.y;
+			}
+			
+			function move(obj) {
+				var id = "#" + obj.id;
+				
+				$(id).parent().animate({"left": obj.x + "px"}, "slow");
+				$(id).parent().animate({"top": obj.y + "px"}, "slow");
+			}
+
+			function removeSocketListeners() {
+				socket.removeEvent('connect');
+				socket.removeEvent('message');
+				socket.removeEvent('disconnect');
+			}
+		</script>
+	</head>
+	<body>
+		<div id="connect">
+			<input id="connectBtn" type="button" value="Connect" /> 
+		</div>
+		<div id="bancada">
+			<h1>Connected Peeps: 0</h1>
+			<input id="imgBtn" type="button" value="Image" />
+		</div>
+	</body>
+</html>
